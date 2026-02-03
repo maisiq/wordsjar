@@ -1,0 +1,18 @@
+
+app:
+  debug: false
+  host: localhost
+  port: 8080
+
+http:
+  allowed_hosts:  #TODO: not used
+    - ""
+  server_shutdown_timeout: 5
+  cookies:
+    base_domain: ""
+    max_age: 3600
+    secure: false
+
+
+database:
+  dsn:
