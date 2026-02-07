@@ -11,7 +11,7 @@ import (
 	"github.com/maisiq/go-words-jar/internal/service"
 )
 
-func (repo *Repository) GetUserWords(ctx context.Context, username string, filters ...service.Filter) ([]models.Word, error) {
+func (repo *Repository) GetJarWords(ctx context.Context, username string, filters ...service.Filter) ([]models.Word, error) {
 	result := []models.Word{}
 	queryFilters := &service.UserWordsFilter{}
 

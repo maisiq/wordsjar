@@ -21,7 +21,7 @@ type TestWord struct {
 }
 
 func (s *Service) GetTestUserWords(ctx context.Context, username string, params QueryParams) ([]TestWord, error) {
-	words, err := s.repo.GetUserWords(ctx, username, WithTestMode())
+	words, err := s.repo.GetJarWords(ctx, username, WithTestMode())
 	if err != nil {
 		s.log.Errorw("failed to get paginated words", "error", err)
 		return nil, err
