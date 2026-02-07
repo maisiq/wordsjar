@@ -20,7 +20,6 @@ func (repo *Repository) GetUserWords(ctx context.Context, username string, filte
 		InnerJoin("user_words uw ON uw.word_en = w.en").
 		InnerJoin("users u ON u.username = uw.username").
 		Where("u.username = $1", username).
-		OrderBy("id").
 		PlaceholderFormat(sq.Dollar)
 
 	for _, filter := range filters {
@@ -29,7 +28,10 @@ func (repo *Repository) GetUserWords(ctx context.Context, username string, filte
 
 	if queryFilters.TestMode {
 		words = words.Where("last_attempt + INTERVAL '1 day' < now() AT TIME ZONE 'UTC'").
-			Where("knowledge_rating < $2", 5.0)
+			Where("knowledge_rating < $2", 5.0).
+			OrderBy("uw.knowledge_rating ASC")
+	} else {
+		words = words.OrderBy("id")
 	}
 
 	if queryFilters.WordID != "" {
