@@ -8,7 +8,7 @@ import (
 )
 
 type JarRepository interface {
-	GetUserWords(ctx context.Context, username string, filters ...Filter) ([]models.Word, error)
+	GetJarWords(ctx context.Context, username string, filters ...Filter) ([]models.Word, error)
 	AddWordToJar(ctx context.Context, username string, setRating float32, words ...string) (int64, error)
 }
 
@@ -19,7 +19,7 @@ type WordsRepository interface {
 }
 
 type ExamRepository interface {
-	GetUserWords(ctx context.Context, username string, filters ...Filter) ([]models.Word, error)
+	GetJarWords(ctx context.Context, username string, filters ...Filter) ([]models.Word, error)
 	GetUserWord(ctx context.Context, wordID string, username string) (*models.UserWord, error)
 	GetWordByID(ctx context.Context, id string) (models.Word, error)
 	UpdateUserWord(ctx context.Context, userWord *models.UserWord) error

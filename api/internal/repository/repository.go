@@ -11,7 +11,7 @@ import (
 var _ IRepository = (*Repository)(nil)
 
 type IRepository interface {
-	GetUserWords(ctx context.Context, username string, filters ...service.Filter) ([]models.Word, error)
+	GetJarWords(ctx context.Context, username string, filters ...service.Filter) ([]models.Word, error)
 	GetWordByID(ctx context.Context, id string) (models.Word, error)
 	GetWordByName(ctx context.Context, wordName string) (models.Word, error)
 	WordList(context.Context, *service.QueryParams) ([]models.Word, error)

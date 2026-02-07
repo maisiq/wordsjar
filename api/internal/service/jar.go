@@ -25,7 +25,7 @@ func IsValidStatus(status string) bool {
 }
 
 func (s *Service) GetUserWords(ctx context.Context, username string, params QueryParams) ([]models.Word, error) {
-	words, err := s.repo.GetUserWords(ctx, username)
+	words, err := s.repo.GetJarWords(ctx, username)
 	if err != nil {
 		s.log.Errorw("failed to get user words", "error", err)
 		return nil, err

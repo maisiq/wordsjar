@@ -34,19 +34,19 @@ type RepositoryMock struct {
 	beforeAddWordToJarCounter uint64
 	AddWordToJarMock          mRepositoryMockAddWordToJar
 
+	funcGetJarWords          func(ctx context.Context, username string, filters ...mm_service.Filter) (wa1 []models.Word, err error)
+	funcGetJarWordsOrigin    string
+	inspectFuncGetJarWords   func(ctx context.Context, username string, filters ...mm_service.Filter)
+	afterGetJarWordsCounter  uint64
+	beforeGetJarWordsCounter uint64
+	GetJarWordsMock          mRepositoryMockGetJarWords
+
 	funcGetUserWord          func(ctx context.Context, wordID string, username string) (up1 *models.UserWord, err error)
 	funcGetUserWordOrigin    string
 	inspectFuncGetUserWord   func(ctx context.Context, wordID string, username string)
 	afterGetUserWordCounter  uint64
 	beforeGetUserWordCounter uint64
 	GetUserWordMock          mRepositoryMockGetUserWord
-
-	funcGetUserWords          func(ctx context.Context, username string, filters ...mm_service.Filter) (wa1 []models.Word, err error)
-	funcGetUserWordsOrigin    string
-	inspectFuncGetUserWords   func(ctx context.Context, username string, filters ...mm_service.Filter)
-	afterGetUserWordsCounter  uint64
-	beforeGetUserWordsCounter uint64
-	GetUserWordsMock          mRepositoryMockGetUserWords
 
 	funcGetWordByID          func(ctx context.Context, id string) (w1 models.Word, err error)
 	funcGetWordByIDOrigin    string
@@ -91,11 +91,11 @@ func NewRepositoryMock(t minimock.Tester) *RepositoryMock {
 	m.AddWordToJarMock = mRepositoryMockAddWordToJar{mock: m}
 	m.AddWordToJarMock.callArgs = []*RepositoryMockAddWordToJarParams{}
 
+	m.GetJarWordsMock = mRepositoryMockGetJarWords{mock: m}
+	m.GetJarWordsMock.callArgs = []*RepositoryMockGetJarWordsParams{}
+
 	m.GetUserWordMock = mRepositoryMockGetUserWord{mock: m}
 	m.GetUserWordMock.callArgs = []*RepositoryMockGetUserWordParams{}
-
-	m.GetUserWordsMock = mRepositoryMockGetUserWords{mock: m}
-	m.GetUserWordsMock.callArgs = []*RepositoryMockGetUserWordsParams{}
 
 	m.GetWordByIDMock = mRepositoryMockGetWordByID{mock: m}
 	m.GetWordByIDMock.callArgs = []*RepositoryMockGetWordByIDParams{}
@@ -861,6 +861,380 @@ func (m *RepositoryMock) MinimockAddWordToJarInspect() {
 	}
 }
 
+type mRepositoryMockGetJarWords struct {
+	optional           bool
+	mock               *RepositoryMock
+	defaultExpectation *RepositoryMockGetJarWordsExpectation
+	expectations       []*RepositoryMockGetJarWordsExpectation
+
+	callArgs []*RepositoryMockGetJarWordsParams
+	mutex    sync.RWMutex
+
+	expectedInvocations       uint64
+	expectedInvocationsOrigin string
+}
+
+// RepositoryMockGetJarWordsExpectation specifies expectation struct of the Repository.GetJarWords
+type RepositoryMockGetJarWordsExpectation struct {
+	mock               *RepositoryMock
+	params             *RepositoryMockGetJarWordsParams
+	paramPtrs          *RepositoryMockGetJarWordsParamPtrs
+	expectationOrigins RepositoryMockGetJarWordsExpectationOrigins
+	results            *RepositoryMockGetJarWordsResults
+	returnOrigin       string
+	Counter            uint64
+}
+
+// RepositoryMockGetJarWordsParams contains parameters of the Repository.GetJarWords
+type RepositoryMockGetJarWordsParams struct {
+	ctx      context.Context
+	username string
+	filters  []mm_service.Filter
+}
+
+// RepositoryMockGetJarWordsParamPtrs contains pointers to parameters of the Repository.GetJarWords
+type RepositoryMockGetJarWordsParamPtrs struct {
+	ctx      *context.Context
+	username *string
+	filters  *[]mm_service.Filter
+}
+
+// RepositoryMockGetJarWordsResults contains results of the Repository.GetJarWords
+type RepositoryMockGetJarWordsResults struct {
+	wa1 []models.Word
+	err error
+}
+
+// RepositoryMockGetJarWordsOrigins contains origins of expectations of the Repository.GetJarWords
+type RepositoryMockGetJarWordsExpectationOrigins struct {
+	origin         string
+	originCtx      string
+	originUsername string
+	originFilters  string
+}
+
+// Marks this method to be optional. The default behavior of any method with Return() is '1 or more', meaning
+// the test will fail minimock's automatic final call check if the mocked method was not called at least once.
+// Optional() makes method check to work in '0 or more' mode.
+// It is NOT RECOMMENDED to use this option unless you really need it, as default behaviour helps to
+// catch the problems when the expected method call is totally skipped during test run.
+func (mmGetJarWords *mRepositoryMockGetJarWords) Optional() *mRepositoryMockGetJarWords {
+	mmGetJarWords.optional = true
+	return mmGetJarWords
+}
+
+// Expect sets up expected params for Repository.GetJarWords
+func (mmGetJarWords *mRepositoryMockGetJarWords) Expect(ctx context.Context, username string, filters ...mm_service.Filter) *mRepositoryMockGetJarWords {
+	if mmGetJarWords.mock.funcGetJarWords != nil {
+		mmGetJarWords.mock.t.Fatalf("RepositoryMock.GetJarWords mock is already set by Set")
+	}
+
+	if mmGetJarWords.defaultExpectation == nil {
+		mmGetJarWords.defaultExpectation = &RepositoryMockGetJarWordsExpectation{}
+	}
+
+	if mmGetJarWords.defaultExpectation.paramPtrs != nil {
+		mmGetJarWords.mock.t.Fatalf("RepositoryMock.GetJarWords mock is already set by ExpectParams functions")
+	}
+
+	mmGetJarWords.defaultExpectation.params = &RepositoryMockGetJarWordsParams{ctx, username, filters}
+	mmGetJarWords.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
+	for _, e := range mmGetJarWords.expectations {
+		if minimock.Equal(e.params, mmGetJarWords.defaultExpectation.params) {
+			mmGetJarWords.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmGetJarWords.defaultExpectation.params)
+		}
+	}
+
+	return mmGetJarWords
+}
+
+// ExpectCtxParam1 sets up expected param ctx for Repository.GetJarWords
+func (mmGetJarWords *mRepositoryMockGetJarWords) ExpectCtxParam1(ctx context.Context) *mRepositoryMockGetJarWords {
+	if mmGetJarWords.mock.funcGetJarWords != nil {
+		mmGetJarWords.mock.t.Fatalf("RepositoryMock.GetJarWords mock is already set by Set")
+	}
+
+	if mmGetJarWords.defaultExpectation == nil {
+		mmGetJarWords.defaultExpectation = &RepositoryMockGetJarWordsExpectation{}
+	}
+
+	if mmGetJarWords.defaultExpectation.params != nil {
+		mmGetJarWords.mock.t.Fatalf("RepositoryMock.GetJarWords mock is already set by Expect")
+	}
+
+	if mmGetJarWords.defaultExpectation.paramPtrs == nil {
+		mmGetJarWords.defaultExpectation.paramPtrs = &RepositoryMockGetJarWordsParamPtrs{}
+	}
+	mmGetJarWords.defaultExpectation.paramPtrs.ctx = &ctx
+	mmGetJarWords.defaultExpectation.expectationOrigins.originCtx = minimock.CallerInfo(1)
+
+	return mmGetJarWords
+}
+
+// ExpectUsernameParam2 sets up expected param username for Repository.GetJarWords
+func (mmGetJarWords *mRepositoryMockGetJarWords) ExpectUsernameParam2(username string) *mRepositoryMockGetJarWords {
+	if mmGetJarWords.mock.funcGetJarWords != nil {
+		mmGetJarWords.mock.t.Fatalf("RepositoryMock.GetJarWords mock is already set by Set")
+	}
+
+	if mmGetJarWords.defaultExpectation == nil {
+		mmGetJarWords.defaultExpectation = &RepositoryMockGetJarWordsExpectation{}
+	}
+
+	if mmGetJarWords.defaultExpectation.params != nil {
+		mmGetJarWords.mock.t.Fatalf("RepositoryMock.GetJarWords mock is already set by Expect")
+	}
+
+	if mmGetJarWords.defaultExpectation.paramPtrs == nil {
+		mmGetJarWords.defaultExpectation.paramPtrs = &RepositoryMockGetJarWordsParamPtrs{}
+	}
+	mmGetJarWords.defaultExpectation.paramPtrs.username = &username
+	mmGetJarWords.defaultExpectation.expectationOrigins.originUsername = minimock.CallerInfo(1)
+
+	return mmGetJarWords
+}
+
+// ExpectFiltersParam3 sets up expected param filters for Repository.GetJarWords
+func (mmGetJarWords *mRepositoryMockGetJarWords) ExpectFiltersParam3(filters ...mm_service.Filter) *mRepositoryMockGetJarWords {
+	if mmGetJarWords.mock.funcGetJarWords != nil {
+		mmGetJarWords.mock.t.Fatalf("RepositoryMock.GetJarWords mock is already set by Set")
+	}
+
+	if mmGetJarWords.defaultExpectation == nil {
+		mmGetJarWords.defaultExpectation = &RepositoryMockGetJarWordsExpectation{}
+	}
+
+	if mmGetJarWords.defaultExpectation.params != nil {
+		mmGetJarWords.mock.t.Fatalf("RepositoryMock.GetJarWords mock is already set by Expect")
+	}
+
+	if mmGetJarWords.defaultExpectation.paramPtrs == nil {
+		mmGetJarWords.defaultExpectation.paramPtrs = &RepositoryMockGetJarWordsParamPtrs{}
+	}
+	mmGetJarWords.defaultExpectation.paramPtrs.filters = &filters
+	mmGetJarWords.defaultExpectation.expectationOrigins.originFilters = minimock.CallerInfo(1)
+
+	return mmGetJarWords
+}
+
+// Inspect accepts an inspector function that has same arguments as the Repository.GetJarWords
+func (mmGetJarWords *mRepositoryMockGetJarWords) Inspect(f func(ctx context.Context, username string, filters ...mm_service.Filter)) *mRepositoryMockGetJarWords {
+	if mmGetJarWords.mock.inspectFuncGetJarWords != nil {
+		mmGetJarWords.mock.t.Fatalf("Inspect function is already set for RepositoryMock.GetJarWords")
+	}
+
+	mmGetJarWords.mock.inspectFuncGetJarWords = f
+
+	return mmGetJarWords
+}
+
+// Return sets up results that will be returned by Repository.GetJarWords
+func (mmGetJarWords *mRepositoryMockGetJarWords) Return(wa1 []models.Word, err error) *RepositoryMock {
+	if mmGetJarWords.mock.funcGetJarWords != nil {
+		mmGetJarWords.mock.t.Fatalf("RepositoryMock.GetJarWords mock is already set by Set")
+	}
+
+	if mmGetJarWords.defaultExpectation == nil {
+		mmGetJarWords.defaultExpectation = &RepositoryMockGetJarWordsExpectation{mock: mmGetJarWords.mock}
+	}
+	mmGetJarWords.defaultExpectation.results = &RepositoryMockGetJarWordsResults{wa1, err}
+	mmGetJarWords.defaultExpectation.returnOrigin = minimock.CallerInfo(1)
+	return mmGetJarWords.mock
+}
+
+// Set uses given function f to mock the Repository.GetJarWords method
+func (mmGetJarWords *mRepositoryMockGetJarWords) Set(f func(ctx context.Context, username string, filters ...mm_service.Filter) (wa1 []models.Word, err error)) *RepositoryMock {
+	if mmGetJarWords.defaultExpectation != nil {
+		mmGetJarWords.mock.t.Fatalf("Default expectation is already set for the Repository.GetJarWords method")
+	}
+
+	if len(mmGetJarWords.expectations) > 0 {
+		mmGetJarWords.mock.t.Fatalf("Some expectations are already set for the Repository.GetJarWords method")
+	}
+
+	mmGetJarWords.mock.funcGetJarWords = f
+	mmGetJarWords.mock.funcGetJarWordsOrigin = minimock.CallerInfo(1)
+	return mmGetJarWords.mock
+}
+
+// When sets expectation for the Repository.GetJarWords which will trigger the result defined by the following
+// Then helper
+func (mmGetJarWords *mRepositoryMockGetJarWords) When(ctx context.Context, username string, filters ...mm_service.Filter) *RepositoryMockGetJarWordsExpectation {
+	if mmGetJarWords.mock.funcGetJarWords != nil {
+		mmGetJarWords.mock.t.Fatalf("RepositoryMock.GetJarWords mock is already set by Set")
+	}
+
+	expectation := &RepositoryMockGetJarWordsExpectation{
+		mock:               mmGetJarWords.mock,
+		params:             &RepositoryMockGetJarWordsParams{ctx, username, filters},
+		expectationOrigins: RepositoryMockGetJarWordsExpectationOrigins{origin: minimock.CallerInfo(1)},
+	}
+	mmGetJarWords.expectations = append(mmGetJarWords.expectations, expectation)
+	return expectation
+}
+
+// Then sets up Repository.GetJarWords return parameters for the expectation previously defined by the When method
+func (e *RepositoryMockGetJarWordsExpectation) Then(wa1 []models.Word, err error) *RepositoryMock {
+	e.results = &RepositoryMockGetJarWordsResults{wa1, err}
+	return e.mock
+}
+
+// Times sets number of times Repository.GetJarWords should be invoked
+func (mmGetJarWords *mRepositoryMockGetJarWords) Times(n uint64) *mRepositoryMockGetJarWords {
+	if n == 0 {
+		mmGetJarWords.mock.t.Fatalf("Times of RepositoryMock.GetJarWords mock can not be zero")
+	}
+	mm_atomic.StoreUint64(&mmGetJarWords.expectedInvocations, n)
+	mmGetJarWords.expectedInvocationsOrigin = minimock.CallerInfo(1)
+	return mmGetJarWords
+}
+
+func (mmGetJarWords *mRepositoryMockGetJarWords) invocationsDone() bool {
+	if len(mmGetJarWords.expectations) == 0 && mmGetJarWords.defaultExpectation == nil && mmGetJarWords.mock.funcGetJarWords == nil {
+		return true
+	}
+
+	totalInvocations := mm_atomic.LoadUint64(&mmGetJarWords.mock.afterGetJarWordsCounter)
+	expectedInvocations := mm_atomic.LoadUint64(&mmGetJarWords.expectedInvocations)
+
+	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
+}
+
+// GetJarWords implements mm_service.Repository
+func (mmGetJarWords *RepositoryMock) GetJarWords(ctx context.Context, username string, filters ...mm_service.Filter) (wa1 []models.Word, err error) {
+	mm_atomic.AddUint64(&mmGetJarWords.beforeGetJarWordsCounter, 1)
+	defer mm_atomic.AddUint64(&mmGetJarWords.afterGetJarWordsCounter, 1)
+
+	mmGetJarWords.t.Helper()
+
+	if mmGetJarWords.inspectFuncGetJarWords != nil {
+		mmGetJarWords.inspectFuncGetJarWords(ctx, username, filters...)
+	}
+
+	mm_params := RepositoryMockGetJarWordsParams{ctx, username, filters}
+
+	// Record call args
+	mmGetJarWords.GetJarWordsMock.mutex.Lock()
+	mmGetJarWords.GetJarWordsMock.callArgs = append(mmGetJarWords.GetJarWordsMock.callArgs, &mm_params)
+	mmGetJarWords.GetJarWordsMock.mutex.Unlock()
+
+	for _, e := range mmGetJarWords.GetJarWordsMock.expectations {
+		if minimock.Equal(*e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.wa1, e.results.err
+		}
+	}
+
+	if mmGetJarWords.GetJarWordsMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmGetJarWords.GetJarWordsMock.defaultExpectation.Counter, 1)
+		mm_want := mmGetJarWords.GetJarWordsMock.defaultExpectation.params
+		mm_want_ptrs := mmGetJarWords.GetJarWordsMock.defaultExpectation.paramPtrs
+
+		mm_got := RepositoryMockGetJarWordsParams{ctx, username, filters}
+
+		if mm_want_ptrs != nil {
+
+			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
+				mmGetJarWords.t.Errorf("RepositoryMock.GetJarWords got unexpected parameter ctx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmGetJarWords.GetJarWordsMock.defaultExpectation.expectationOrigins.originCtx, *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+			}
+
+			if mm_want_ptrs.username != nil && !minimock.Equal(*mm_want_ptrs.username, mm_got.username) {
+				mmGetJarWords.t.Errorf("RepositoryMock.GetJarWords got unexpected parameter username, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmGetJarWords.GetJarWordsMock.defaultExpectation.expectationOrigins.originUsername, *mm_want_ptrs.username, mm_got.username, minimock.Diff(*mm_want_ptrs.username, mm_got.username))
+			}
+
+			if mm_want_ptrs.filters != nil && !minimock.Equal(*mm_want_ptrs.filters, mm_got.filters) {
+				mmGetJarWords.t.Errorf("RepositoryMock.GetJarWords got unexpected parameter filters, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmGetJarWords.GetJarWordsMock.defaultExpectation.expectationOrigins.originFilters, *mm_want_ptrs.filters, mm_got.filters, minimock.Diff(*mm_want_ptrs.filters, mm_got.filters))
+			}
+
+		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmGetJarWords.t.Errorf("RepositoryMock.GetJarWords got unexpected parameters, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+				mmGetJarWords.GetJarWordsMock.defaultExpectation.expectationOrigins.origin, *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmGetJarWords.GetJarWordsMock.defaultExpectation.results
+		if mm_results == nil {
+			mmGetJarWords.t.Fatal("No results are set for the RepositoryMock.GetJarWords")
+		}
+		return (*mm_results).wa1, (*mm_results).err
+	}
+	if mmGetJarWords.funcGetJarWords != nil {
+		return mmGetJarWords.funcGetJarWords(ctx, username, filters...)
+	}
+	mmGetJarWords.t.Fatalf("Unexpected call to RepositoryMock.GetJarWords. %v %v %v", ctx, username, filters)
+	return
+}
+
+// GetJarWordsAfterCounter returns a count of finished RepositoryMock.GetJarWords invocations
+func (mmGetJarWords *RepositoryMock) GetJarWordsAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmGetJarWords.afterGetJarWordsCounter)
+}
+
+// GetJarWordsBeforeCounter returns a count of RepositoryMock.GetJarWords invocations
+func (mmGetJarWords *RepositoryMock) GetJarWordsBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmGetJarWords.beforeGetJarWordsCounter)
+}
+
+// Calls returns a list of arguments used in each call to RepositoryMock.GetJarWords.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmGetJarWords *mRepositoryMockGetJarWords) Calls() []*RepositoryMockGetJarWordsParams {
+	mmGetJarWords.mutex.RLock()
+
+	argCopy := make([]*RepositoryMockGetJarWordsParams, len(mmGetJarWords.callArgs))
+	copy(argCopy, mmGetJarWords.callArgs)
+
+	mmGetJarWords.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockGetJarWordsDone returns true if the count of the GetJarWords invocations corresponds
+// the number of defined expectations
+func (m *RepositoryMock) MinimockGetJarWordsDone() bool {
+	if m.GetJarWordsMock.optional {
+		// Optional methods provide '0 or more' call count restriction.
+		return true
+	}
+
+	for _, e := range m.GetJarWordsMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	return m.GetJarWordsMock.invocationsDone()
+}
+
+// MinimockGetJarWordsInspect logs each unmet expectation
+func (m *RepositoryMock) MinimockGetJarWordsInspect() {
+	for _, e := range m.GetJarWordsMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to RepositoryMock.GetJarWords at\n%s with params: %#v", e.expectationOrigins.origin, *e.params)
+		}
+	}
+
+	afterGetJarWordsCounter := mm_atomic.LoadUint64(&m.afterGetJarWordsCounter)
+	// if default expectation was set then invocations count should be greater than zero
+	if m.GetJarWordsMock.defaultExpectation != nil && afterGetJarWordsCounter < 1 {
+		if m.GetJarWordsMock.defaultExpectation.params == nil {
+			m.t.Errorf("Expected call to RepositoryMock.GetJarWords at\n%s", m.GetJarWordsMock.defaultExpectation.returnOrigin)
+		} else {
+			m.t.Errorf("Expected call to RepositoryMock.GetJarWords at\n%s with params: %#v", m.GetJarWordsMock.defaultExpectation.expectationOrigins.origin, *m.GetJarWordsMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcGetJarWords != nil && afterGetJarWordsCounter < 1 {
+		m.t.Errorf("Expected call to RepositoryMock.GetJarWords at\n%s", m.funcGetJarWordsOrigin)
+	}
+
+	if !m.GetJarWordsMock.invocationsDone() && afterGetJarWordsCounter > 0 {
+		m.t.Errorf("Expected %d calls to RepositoryMock.GetJarWords at\n%s but found %d calls",
+			mm_atomic.LoadUint64(&m.GetJarWordsMock.expectedInvocations), m.GetJarWordsMock.expectedInvocationsOrigin, afterGetJarWordsCounter)
+	}
+}
+
 type mRepositoryMockGetUserWord struct {
 	optional           bool
 	mock               *RepositoryMock
@@ -1232,380 +1606,6 @@ func (m *RepositoryMock) MinimockGetUserWordInspect() {
 	if !m.GetUserWordMock.invocationsDone() && afterGetUserWordCounter > 0 {
 		m.t.Errorf("Expected %d calls to RepositoryMock.GetUserWord at\n%s but found %d calls",
 			mm_atomic.LoadUint64(&m.GetUserWordMock.expectedInvocations), m.GetUserWordMock.expectedInvocationsOrigin, afterGetUserWordCounter)
-	}
-}
-
-type mRepositoryMockGetUserWords struct {
-	optional           bool
-	mock               *RepositoryMock
-	defaultExpectation *RepositoryMockGetUserWordsExpectation
-	expectations       []*RepositoryMockGetUserWordsExpectation
-
-	callArgs []*RepositoryMockGetUserWordsParams
-	mutex    sync.RWMutex
-
-	expectedInvocations       uint64
-	expectedInvocationsOrigin string
-}
-
-// RepositoryMockGetUserWordsExpectation specifies expectation struct of the Repository.GetUserWords
-type RepositoryMockGetUserWordsExpectation struct {
-	mock               *RepositoryMock
-	params             *RepositoryMockGetUserWordsParams
-	paramPtrs          *RepositoryMockGetUserWordsParamPtrs
-	expectationOrigins RepositoryMockGetUserWordsExpectationOrigins
-	results            *RepositoryMockGetUserWordsResults
-	returnOrigin       string
-	Counter            uint64
-}
-
-// RepositoryMockGetUserWordsParams contains parameters of the Repository.GetUserWords
-type RepositoryMockGetUserWordsParams struct {
-	ctx      context.Context
-	username string
-	filters  []mm_service.Filter
-}
-
-// RepositoryMockGetUserWordsParamPtrs contains pointers to parameters of the Repository.GetUserWords
-type RepositoryMockGetUserWordsParamPtrs struct {
-	ctx      *context.Context
-	username *string
-	filters  *[]mm_service.Filter
-}
-
-// RepositoryMockGetUserWordsResults contains results of the Repository.GetUserWords
-type RepositoryMockGetUserWordsResults struct {
-	wa1 []models.Word
-	err error
-}
-
-// RepositoryMockGetUserWordsOrigins contains origins of expectations of the Repository.GetUserWords
-type RepositoryMockGetUserWordsExpectationOrigins struct {
-	origin         string
-	originCtx      string
-	originUsername string
-	originFilters  string
-}
-
-// Marks this method to be optional. The default behavior of any method with Return() is '1 or more', meaning
-// the test will fail minimock's automatic final call check if the mocked method was not called at least once.
-// Optional() makes method check to work in '0 or more' mode.
-// It is NOT RECOMMENDED to use this option unless you really need it, as default behaviour helps to
-// catch the problems when the expected method call is totally skipped during test run.
-func (mmGetUserWords *mRepositoryMockGetUserWords) Optional() *mRepositoryMockGetUserWords {
-	mmGetUserWords.optional = true
-	return mmGetUserWords
-}
-
-// Expect sets up expected params for Repository.GetUserWords
-func (mmGetUserWords *mRepositoryMockGetUserWords) Expect(ctx context.Context, username string, filters ...mm_service.Filter) *mRepositoryMockGetUserWords {
-	if mmGetUserWords.mock.funcGetUserWords != nil {
-		mmGetUserWords.mock.t.Fatalf("RepositoryMock.GetUserWords mock is already set by Set")
-	}
-
-	if mmGetUserWords.defaultExpectation == nil {
-		mmGetUserWords.defaultExpectation = &RepositoryMockGetUserWordsExpectation{}
-	}
-
-	if mmGetUserWords.defaultExpectation.paramPtrs != nil {
-		mmGetUserWords.mock.t.Fatalf("RepositoryMock.GetUserWords mock is already set by ExpectParams functions")
-	}
-
-	mmGetUserWords.defaultExpectation.params = &RepositoryMockGetUserWordsParams{ctx, username, filters}
-	mmGetUserWords.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
-	for _, e := range mmGetUserWords.expectations {
-		if minimock.Equal(e.params, mmGetUserWords.defaultExpectation.params) {
-			mmGetUserWords.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmGetUserWords.defaultExpectation.params)
-		}
-	}
-
-	return mmGetUserWords
-}
-
-// ExpectCtxParam1 sets up expected param ctx for Repository.GetUserWords
-func (mmGetUserWords *mRepositoryMockGetUserWords) ExpectCtxParam1(ctx context.Context) *mRepositoryMockGetUserWords {
-	if mmGetUserWords.mock.funcGetUserWords != nil {
-		mmGetUserWords.mock.t.Fatalf("RepositoryMock.GetUserWords mock is already set by Set")
-	}
-
-	if mmGetUserWords.defaultExpectation == nil {
-		mmGetUserWords.defaultExpectation = &RepositoryMockGetUserWordsExpectation{}
-	}
-
-	if mmGetUserWords.defaultExpectation.params != nil {
-		mmGetUserWords.mock.t.Fatalf("RepositoryMock.GetUserWords mock is already set by Expect")
-	}
-
-	if mmGetUserWords.defaultExpectation.paramPtrs == nil {
-		mmGetUserWords.defaultExpectation.paramPtrs = &RepositoryMockGetUserWordsParamPtrs{}
-	}
-	mmGetUserWords.defaultExpectation.paramPtrs.ctx = &ctx
-	mmGetUserWords.defaultExpectation.expectationOrigins.originCtx = minimock.CallerInfo(1)
-
-	return mmGetUserWords
-}
-
-// ExpectUsernameParam2 sets up expected param username for Repository.GetUserWords
-func (mmGetUserWords *mRepositoryMockGetUserWords) ExpectUsernameParam2(username string) *mRepositoryMockGetUserWords {
-	if mmGetUserWords.mock.funcGetUserWords != nil {
-		mmGetUserWords.mock.t.Fatalf("RepositoryMock.GetUserWords mock is already set by Set")
-	}
-
-	if mmGetUserWords.defaultExpectation == nil {
-		mmGetUserWords.defaultExpectation = &RepositoryMockGetUserWordsExpectation{}
-	}
-
-	if mmGetUserWords.defaultExpectation.params != nil {
-		mmGetUserWords.mock.t.Fatalf("RepositoryMock.GetUserWords mock is already set by Expect")
-	}
-
-	if mmGetUserWords.defaultExpectation.paramPtrs == nil {
-		mmGetUserWords.defaultExpectation.paramPtrs = &RepositoryMockGetUserWordsParamPtrs{}
-	}
-	mmGetUserWords.defaultExpectation.paramPtrs.username = &username
-	mmGetUserWords.defaultExpectation.expectationOrigins.originUsername = minimock.CallerInfo(1)
-
-	return mmGetUserWords
-}
-
-// ExpectFiltersParam3 sets up expected param filters for Repository.GetUserWords
-func (mmGetUserWords *mRepositoryMockGetUserWords) ExpectFiltersParam3(filters ...mm_service.Filter) *mRepositoryMockGetUserWords {
-	if mmGetUserWords.mock.funcGetUserWords != nil {
-		mmGetUserWords.mock.t.Fatalf("RepositoryMock.GetUserWords mock is already set by Set")
-	}
-
-	if mmGetUserWords.defaultExpectation == nil {
-		mmGetUserWords.defaultExpectation = &RepositoryMockGetUserWordsExpectation{}
-	}
-
-	if mmGetUserWords.defaultExpectation.params != nil {
-		mmGetUserWords.mock.t.Fatalf("RepositoryMock.GetUserWords mock is already set by Expect")
-	}
-
-	if mmGetUserWords.defaultExpectation.paramPtrs == nil {
-		mmGetUserWords.defaultExpectation.paramPtrs = &RepositoryMockGetUserWordsParamPtrs{}
-	}
-	mmGetUserWords.defaultExpectation.paramPtrs.filters = &filters
-	mmGetUserWords.defaultExpectation.expectationOrigins.originFilters = minimock.CallerInfo(1)
-
-	return mmGetUserWords
-}
-
-// Inspect accepts an inspector function that has same arguments as the Repository.GetUserWords
-func (mmGetUserWords *mRepositoryMockGetUserWords) Inspect(f func(ctx context.Context, username string, filters ...mm_service.Filter)) *mRepositoryMockGetUserWords {
-	if mmGetUserWords.mock.inspectFuncGetUserWords != nil {
-		mmGetUserWords.mock.t.Fatalf("Inspect function is already set for RepositoryMock.GetUserWords")
-	}
-
-	mmGetUserWords.mock.inspectFuncGetUserWords = f
-
-	return mmGetUserWords
-}
-
-// Return sets up results that will be returned by Repository.GetUserWords
-func (mmGetUserWords *mRepositoryMockGetUserWords) Return(wa1 []models.Word, err error) *RepositoryMock {
-	if mmGetUserWords.mock.funcGetUserWords != nil {
-		mmGetUserWords.mock.t.Fatalf("RepositoryMock.GetUserWords mock is already set by Set")
-	}
-
-	if mmGetUserWords.defaultExpectation == nil {
-		mmGetUserWords.defaultExpectation = &RepositoryMockGetUserWordsExpectation{mock: mmGetUserWords.mock}
-	}
-	mmGetUserWords.defaultExpectation.results = &RepositoryMockGetUserWordsResults{wa1, err}
-	mmGetUserWords.defaultExpectation.returnOrigin = minimock.CallerInfo(1)
-	return mmGetUserWords.mock
-}
-
-// Set uses given function f to mock the Repository.GetUserWords method
-func (mmGetUserWords *mRepositoryMockGetUserWords) Set(f func(ctx context.Context, username string, filters ...mm_service.Filter) (wa1 []models.Word, err error)) *RepositoryMock {
-	if mmGetUserWords.defaultExpectation != nil {
-		mmGetUserWords.mock.t.Fatalf("Default expectation is already set for the Repository.GetUserWords method")
-	}
-
-	if len(mmGetUserWords.expectations) > 0 {
-		mmGetUserWords.mock.t.Fatalf("Some expectations are already set for the Repository.GetUserWords method")
-	}
-
-	mmGetUserWords.mock.funcGetUserWords = f
-	mmGetUserWords.mock.funcGetUserWordsOrigin = minimock.CallerInfo(1)
-	return mmGetUserWords.mock
-}
-
-// When sets expectation for the Repository.GetUserWords which will trigger the result defined by the following
-// Then helper
-func (mmGetUserWords *mRepositoryMockGetUserWords) When(ctx context.Context, username string, filters ...mm_service.Filter) *RepositoryMockGetUserWordsExpectation {
-	if mmGetUserWords.mock.funcGetUserWords != nil {
-		mmGetUserWords.mock.t.Fatalf("RepositoryMock.GetUserWords mock is already set by Set")
-	}
-
-	expectation := &RepositoryMockGetUserWordsExpectation{
-		mock:               mmGetUserWords.mock,
-		params:             &RepositoryMockGetUserWordsParams{ctx, username, filters},
-		expectationOrigins: RepositoryMockGetUserWordsExpectationOrigins{origin: minimock.CallerInfo(1)},
-	}
-	mmGetUserWords.expectations = append(mmGetUserWords.expectations, expectation)
-	return expectation
-}
-
-// Then sets up Repository.GetUserWords return parameters for the expectation previously defined by the When method
-func (e *RepositoryMockGetUserWordsExpectation) Then(wa1 []models.Word, err error) *RepositoryMock {
-	e.results = &RepositoryMockGetUserWordsResults{wa1, err}
-	return e.mock
-}
-
-// Times sets number of times Repository.GetUserWords should be invoked
-func (mmGetUserWords *mRepositoryMockGetUserWords) Times(n uint64) *mRepositoryMockGetUserWords {
-	if n == 0 {
-		mmGetUserWords.mock.t.Fatalf("Times of RepositoryMock.GetUserWords mock can not be zero")
-	}
-	mm_atomic.StoreUint64(&mmGetUserWords.expectedInvocations, n)
-	mmGetUserWords.expectedInvocationsOrigin = minimock.CallerInfo(1)
-	return mmGetUserWords
-}
-
-func (mmGetUserWords *mRepositoryMockGetUserWords) invocationsDone() bool {
-	if len(mmGetUserWords.expectations) == 0 && mmGetUserWords.defaultExpectation == nil && mmGetUserWords.mock.funcGetUserWords == nil {
-		return true
-	}
-
-	totalInvocations := mm_atomic.LoadUint64(&mmGetUserWords.mock.afterGetUserWordsCounter)
-	expectedInvocations := mm_atomic.LoadUint64(&mmGetUserWords.expectedInvocations)
-
-	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
-}
-
-// GetUserWords implements mm_service.Repository
-func (mmGetUserWords *RepositoryMock) GetUserWords(ctx context.Context, username string, filters ...mm_service.Filter) (wa1 []models.Word, err error) {
-	mm_atomic.AddUint64(&mmGetUserWords.beforeGetUserWordsCounter, 1)
-	defer mm_atomic.AddUint64(&mmGetUserWords.afterGetUserWordsCounter, 1)
-
-	mmGetUserWords.t.Helper()
-
-	if mmGetUserWords.inspectFuncGetUserWords != nil {
-		mmGetUserWords.inspectFuncGetUserWords(ctx, username, filters...)
-	}
-
-	mm_params := RepositoryMockGetUserWordsParams{ctx, username, filters}
-
-	// Record call args
-	mmGetUserWords.GetUserWordsMock.mutex.Lock()
-	mmGetUserWords.GetUserWordsMock.callArgs = append(mmGetUserWords.GetUserWordsMock.callArgs, &mm_params)
-	mmGetUserWords.GetUserWordsMock.mutex.Unlock()
-
-	for _, e := range mmGetUserWords.GetUserWordsMock.expectations {
-		if minimock.Equal(*e.params, mm_params) {
-			mm_atomic.AddUint64(&e.Counter, 1)
-			return e.results.wa1, e.results.err
-		}
-	}
-
-	if mmGetUserWords.GetUserWordsMock.defaultExpectation != nil {
-		mm_atomic.AddUint64(&mmGetUserWords.GetUserWordsMock.defaultExpectation.Counter, 1)
-		mm_want := mmGetUserWords.GetUserWordsMock.defaultExpectation.params
-		mm_want_ptrs := mmGetUserWords.GetUserWordsMock.defaultExpectation.paramPtrs
-
-		mm_got := RepositoryMockGetUserWordsParams{ctx, username, filters}
-
-		if mm_want_ptrs != nil {
-
-			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
-				mmGetUserWords.t.Errorf("RepositoryMock.GetUserWords got unexpected parameter ctx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
-					mmGetUserWords.GetUserWordsMock.defaultExpectation.expectationOrigins.originCtx, *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
-			}
-
-			if mm_want_ptrs.username != nil && !minimock.Equal(*mm_want_ptrs.username, mm_got.username) {
-				mmGetUserWords.t.Errorf("RepositoryMock.GetUserWords got unexpected parameter username, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
-					mmGetUserWords.GetUserWordsMock.defaultExpectation.expectationOrigins.originUsername, *mm_want_ptrs.username, mm_got.username, minimock.Diff(*mm_want_ptrs.username, mm_got.username))
-			}
-
-			if mm_want_ptrs.filters != nil && !minimock.Equal(*mm_want_ptrs.filters, mm_got.filters) {
-				mmGetUserWords.t.Errorf("RepositoryMock.GetUserWords got unexpected parameter filters, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
-					mmGetUserWords.GetUserWordsMock.defaultExpectation.expectationOrigins.originFilters, *mm_want_ptrs.filters, mm_got.filters, minimock.Diff(*mm_want_ptrs.filters, mm_got.filters))
-			}
-
-		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
-			mmGetUserWords.t.Errorf("RepositoryMock.GetUserWords got unexpected parameters, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
-				mmGetUserWords.GetUserWordsMock.defaultExpectation.expectationOrigins.origin, *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
-		}
-
-		mm_results := mmGetUserWords.GetUserWordsMock.defaultExpectation.results
-		if mm_results == nil {
-			mmGetUserWords.t.Fatal("No results are set for the RepositoryMock.GetUserWords")
-		}
-		return (*mm_results).wa1, (*mm_results).err
-	}
-	if mmGetUserWords.funcGetUserWords != nil {
-		return mmGetUserWords.funcGetUserWords(ctx, username, filters...)
-	}
-	mmGetUserWords.t.Fatalf("Unexpected call to RepositoryMock.GetUserWords. %v %v %v", ctx, username, filters)
-	return
-}
-
-// GetUserWordsAfterCounter returns a count of finished RepositoryMock.GetUserWords invocations
-func (mmGetUserWords *RepositoryMock) GetUserWordsAfterCounter() uint64 {
-	return mm_atomic.LoadUint64(&mmGetUserWords.afterGetUserWordsCounter)
-}
-
-// GetUserWordsBeforeCounter returns a count of RepositoryMock.GetUserWords invocations
-func (mmGetUserWords *RepositoryMock) GetUserWordsBeforeCounter() uint64 {
-	return mm_atomic.LoadUint64(&mmGetUserWords.beforeGetUserWordsCounter)
-}
-
-// Calls returns a list of arguments used in each call to RepositoryMock.GetUserWords.
-// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
-func (mmGetUserWords *mRepositoryMockGetUserWords) Calls() []*RepositoryMockGetUserWordsParams {
-	mmGetUserWords.mutex.RLock()
-
-	argCopy := make([]*RepositoryMockGetUserWordsParams, len(mmGetUserWords.callArgs))
-	copy(argCopy, mmGetUserWords.callArgs)
-
-	mmGetUserWords.mutex.RUnlock()
-
-	return argCopy
-}
-
-// MinimockGetUserWordsDone returns true if the count of the GetUserWords invocations corresponds
-// the number of defined expectations
-func (m *RepositoryMock) MinimockGetUserWordsDone() bool {
-	if m.GetUserWordsMock.optional {
-		// Optional methods provide '0 or more' call count restriction.
-		return true
-	}
-
-	for _, e := range m.GetUserWordsMock.expectations {
-		if mm_atomic.LoadUint64(&e.Counter) < 1 {
-			return false
-		}
-	}
-
-	return m.GetUserWordsMock.invocationsDone()
-}
-
-// MinimockGetUserWordsInspect logs each unmet expectation
-func (m *RepositoryMock) MinimockGetUserWordsInspect() {
-	for _, e := range m.GetUserWordsMock.expectations {
-		if mm_atomic.LoadUint64(&e.Counter) < 1 {
-			m.t.Errorf("Expected call to RepositoryMock.GetUserWords at\n%s with params: %#v", e.expectationOrigins.origin, *e.params)
-		}
-	}
-
-	afterGetUserWordsCounter := mm_atomic.LoadUint64(&m.afterGetUserWordsCounter)
-	// if default expectation was set then invocations count should be greater than zero
-	if m.GetUserWordsMock.defaultExpectation != nil && afterGetUserWordsCounter < 1 {
-		if m.GetUserWordsMock.defaultExpectation.params == nil {
-			m.t.Errorf("Expected call to RepositoryMock.GetUserWords at\n%s", m.GetUserWordsMock.defaultExpectation.returnOrigin)
-		} else {
-			m.t.Errorf("Expected call to RepositoryMock.GetUserWords at\n%s with params: %#v", m.GetUserWordsMock.defaultExpectation.expectationOrigins.origin, *m.GetUserWordsMock.defaultExpectation.params)
-		}
-	}
-	// if func was set then invocations count should be greater than zero
-	if m.funcGetUserWords != nil && afterGetUserWordsCounter < 1 {
-		m.t.Errorf("Expected call to RepositoryMock.GetUserWords at\n%s", m.funcGetUserWordsOrigin)
-	}
-
-	if !m.GetUserWordsMock.invocationsDone() && afterGetUserWordsCounter > 0 {
-		m.t.Errorf("Expected %d calls to RepositoryMock.GetUserWords at\n%s but found %d calls",
-			mm_atomic.LoadUint64(&m.GetUserWordsMock.expectedInvocations), m.GetUserWordsMock.expectedInvocationsOrigin, afterGetUserWordsCounter)
 	}
 }
 
@@ -2988,9 +2988,9 @@ func (m *RepositoryMock) MinimockFinish() {
 
 			m.MinimockAddWordToJarInspect()
 
-			m.MinimockGetUserWordInspect()
+			m.MinimockGetJarWordsInspect()
 
-			m.MinimockGetUserWordsInspect()
+			m.MinimockGetUserWordInspect()
 
 			m.MinimockGetWordByIDInspect()
 
@@ -3024,8 +3024,8 @@ func (m *RepositoryMock) minimockDone() bool {
 	return done &&
 		m.MinimockAddWordDone() &&
 		m.MinimockAddWordToJarDone() &&
+		m.MinimockGetJarWordsDone() &&
 		m.MinimockGetUserWordDone() &&
-		m.MinimockGetUserWordsDone() &&
 		m.MinimockGetWordByIDDone() &&
 		m.MinimockGetWordByNameDone() &&
 		m.MinimockUpdateUserWordDone() &&
